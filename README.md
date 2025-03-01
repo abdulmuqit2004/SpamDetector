@@ -1,3 +1,30 @@
+# Instructions
+To run the code, start by cloning this repository onto your local computer,
+and continue with compiling SpamDetectorGUI.java. (Please ensure you have
+a compatible JDK installed)
+
+Click the "Train" button and follow the directory ./src/main/resources/data/train.
+(Note: do not double-click the train folder, only select then click "open").
+Your there should be both "ham" and "ham2" folders in the train directory.
+
+Once the training process is complete, select test, then follow the directory
+./src/main/resources/data/test. Open the folder by clicking "open."
+
+Your JFrame should now display information on all the emails as shown below.
+
+<div align="center">
+  <img src="hamOutput.png" alt="Assignment 1 Output">
+<img src="spamOutput.png" alt="Assignment 1 Output">
+</div>
+
+
+## Adjustments made
+The spam detection algorithm was slightly enhanced for improved accuracy.
+We applied Lapace smoothing with a factor of 0.8 to make sure no probability is
+exactly 0. We also made use of square roots for improved accuracy and 
+lower run times.
+
+
 # Assignment 1 - Spam Detection
 CSCI 2020U: System Development and Integration
 

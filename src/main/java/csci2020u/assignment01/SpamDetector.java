@@ -1,7 +1,16 @@
 package csci2020u.assignment01;
 
-import java.io.*;
-import java.util.*;
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileReader;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 public class SpamDetector {
     private Map<String, Integer> trainHamFreq;
@@ -20,12 +29,18 @@ public class SpamDetector {
         this.totalSpamFiles = 0;
     }
 
-    public void train() {
-        String basePath = "C:\\Users\\abdul\\csci2020u\\w25-csci2020u-assignment01-a1-afzal-abulhassan\\src\\main\\resources\\data\\train";
+    /**
+     * Allows the user to select a directory dynamically for training
+     */
+    public void train(File selectedDir) {
+        if (selectedDir == null || !selectedDir.exists() || !selectedDir.isDirectory()) {
+            System.err.println("Invalid training directory selected.");
+            return;
+        }
 
-        File hamDir1 = new File(basePath + "\\ham");
-        File hamDir2 = new File(basePath + "\\ham2");
-        File spamDir = new File(basePath + "\\spam");
+        File hamDir1 = new File(selectedDir, "ham");
+        File hamDir2 = new File(selectedDir, "ham2");
+        File spamDir = new File(selectedDir, "spam");
 
         processEmails(hamDir1, trainHamFreq, true);
         processEmails(hamDir2, trainHamFreq, true);
@@ -69,10 +84,17 @@ public class SpamDetector {
         return wordCounts;
     }
 
-    public List<TestFile> testModel() {
-        String basePath = "C:\\Users\\abdul\\csci2020u\\w25-csci2020u-assignment01-a1-afzal-abulhassan\\src\\main\\resources\\data\\test";
-        File hamDir = new File(basePath + "\\ham");
-        File spamDir = new File(basePath + "\\spam");
+    /**
+     * Allows the user to select a directory dynamically for testing
+     */
+    public List<TestFile> testModel(File selectedTestDir) {
+        if (selectedTestDir == null || !selectedTestDir.exists() || !selectedTestDir.isDirectory()) {
+            System.err.println("Invalid test directory selected.");
+            return Collections.emptyList();
+        }
+
+        File hamDir = new File(selectedTestDir, "ham");
+        File spamDir = new File(selectedTestDir, "spam");
 
         testFiles.clear();
         testFiles.addAll(classifyDirectory(hamDir, "ham"));
