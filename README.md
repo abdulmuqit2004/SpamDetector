@@ -2,6 +2,11 @@
 
 This Java-based spam detection tool was developed by two students as part of a system integration project. It uses a Naive Bayes classifier based on unigram word probabilities to detect whether an email is spam or not.
 
+## Authors
+
+- Abdul Muqit Afzal
+- Amir Abouelhassen
+
 ## Features
 
 - GUI built using Java Swing for ease of use
