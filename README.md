@@ -1,131 +1,91 @@
-# Instructions
-To run the code, start by cloning this repository onto your local computer,
-and continue with compiling SpamDetectorGUI.java. (Please ensure you have
-a compatible JDK installed)
+# Spam Email Detector 
 
-Click the "Train" button and follow the directory ./src/main/resources/data/train.
-(Note: do not double-click the train folder, only select then click "open").
-Your there should be both "ham" and "ham2" folders in the train directory.
+This Java-based spam detection tool was developed by two students as part of a system integration project. It uses a Naive Bayes classifier based on unigram word probabilities to detect whether an email is spam or not.
 
-Once the training process is complete, select test, then follow the directory
-./src/main/resources/data/test. Open the folder by clicking "open."
+## Features
 
-Your JFrame should now display information on all the emails as shown below.
+- GUI built using Java Swing for ease of use
+- Train and test folders for dataset management
+- Real-time email classification with accuracy and precision stats
+- Uses Laplace smoothing (0.8 factor) to avoid zero-probability issues
+- Performance enhancements using square root scaling to balance precision and runtime
 
-<div align="center">
-  <img src="hamOutput.png" alt="Assignment 1 Output">
-<img src="spamOutput.png" alt="Assignment 1 Output">
-</div>
+## How It Works
 
+### 1. Training Phase
 
-## Adjustments made
-The spam detection algorithm was slightly enhanced for improved accuracy.
-We applied Lapace smoothing with a factor of 0.8 to make sure no probability is
-exactly 0. We also made use of square roots for improved accuracy and 
-lower run times.
+During training, the system processes all emails in `train/ham`, `train/ham2`, and `train/spam` folders. It constructs two frequency maps:
 
+- `trainHamFreq`: Counts how many ham emails contain each word
+- `trainSpamFreq`: Counts how many spam emails contain each word
 
-# Assignment 1 - Spam Detection
-CSCI 2020U: System Development and Integration
+From these frequencies, the following probabilities are computed:
 
-## Overview
-You have become frustrated with all the advertisements in your inbox. You resolve to create a spam detector to filter out the spam. The spam detector will use a dataset of E-Mails (spam or otherwise) to train your program to recognize whether or not new E-Mails are spam. The program will use a unigram approach [1], where each word is counted and associated with whether or not the message is spam. Your program will calculate probabilities based on each word’s frequency [2]. Luckily, you have not emptied your spam folder or inbox in quite a while, so you have many samples to train your system.
+#### Probability Calculations
 
-### Primary Instructions
-Before you begin, download the training and testing data containing spam (unwanted messages, often advertisements) and ham (wanted emails, not spam) messages. The data is divided into two folders: train and test.
-The train folder will be used to determine word frequencies, and the test folder will be used to evaluate your spam filter. Within these two folders, the spam messages are in a spam folder, and the ham messages are in a ham folder.
+For each word \( W_i \), we calculate:
 
-#### Training
-In the training phase, the program will read all the files (each containing one E-Mail) in both the training/spam and training/ham folders. You will determine which words exist in each file. A good starting point for this code is the File I/O sample we completed in the lectures. For simplicity, let’s ignore the case, and let’s also ignore how many times a word appears in a single file and count how many files have the word.
-We’ll combine these words into two frequency maps: `trainHamFreq` and `trainSpamFreq`. The map `trainHamFreq` contains a map of words and the number of files containing that word in the ham folder. The map `trainSpamFreq` contains a map of words and the number of files containing that word in the spam folder.
-This part of the process aims to collect a set of $Pr(S|W_i)$ values for each word $W_i$. $Pr(S|W_i)$ is the probability that a file is spam because it contains the word $W_i$. $Pr(W_i|S)$ is the probability that the word $W_i$ appears in a spam file. $Pr(W_i|H)$ is the probability that the word $W_i$ appears in a ham file.
+- \( P(W_i | S) = \frac{\text{# of spam files containing } W_i}{\text{Total spam files}} \)
+- \( P(W_i | H) = \frac{\text{# of ham files containing } W_i}{\text{Total ham files}} \)
+- \( P(S | W_i) = \frac{P(W_i | S)}{P(W_i | S) + P(W_i | H)} \)
 
-```math
-Pr\left(S|W_i\right) = \frac{Pr\left(W_i|S\right)}{Pr\left(W_i|S\right) + Pr\left(W_i|H\right)}
-```
-<br>
+These values are stored in a `Map<String, Double>` for efficient lookup during testing.
 
-```math
-Pr\left(W_i|S\right) = \frac{ \text{\# of spam files containing }W_i }{ \text{\# of spam files} }
-```
-<br>
+### 2. Testing Phase
 
-```math
-Pr\left(W_i|H\right) = \frac{ \text{\# of ham files containing }W_i }{ \text{\# of ham files} }
-```
-<br>
+For each email in `test/ham` and `test/spam`, we calculate the spam probability based on words present in the email. The log-odds of spam are computed using:
 
->Note: It is recommended that you put all of these probabilities, $Pr(S|W_i)$, into a map (e.g. TreeMap) indexed by the word, $W_i$, itself. Using a map for this purpose is efficient and will result in shorter code since you will not need to search through a list of probabilities.
+\[
+\eta = \sum_{i=1}^{N} \left[ \ln(1 - P(S | W_i)) - \ln(P(S | W_i)) \right]
+\]
 
-#### Testing
-Once we have built our probability map, we’ll examine two more folders: test/ham and test/spam. The emails in test/ham are not spam, and those in test/spam are spam. Do not use these files to train your program. We are now going to see how well your spam detector works.
-Each file in both directories will be examined, word by word. The ham and spam probabilities for each word in a file will be used to compute the probability that the file is spam.
+And the final spam probability for the email:
 
-```math
-\eta = \sum_{i=1}^{N} \Big[ \ln \big( 1 - Pr\left(S|W_i\right) \big) - \ln \big( Pr\left(S|W_i\right) \big) \Big]
-```
-<br>
+\[
+P(S|F) = \frac{1}{1 + e^\eta}
+\]
 
-```math
-Pr\left(S|F\right) = \frac{1}{1 + e^\eta}
-```
-<br>
+### 3. Evaluation Metrics
 
->Note: The reason for the logarithms and exponents is complicated. The short story is that if we multiply probabilities, we may have values too small to represent with floating points for large files accurately. Taking the logarithm normalizes the numbers.
-The probability that a file is spam, $Pr(S|F)$, is determined by the formulae above. Some useful Mathematical operations and constants are given in the following table:
+After classifying the test emails, we compute two key metrics:
 
-| Function or Constant | Description                                    |
-|----------------------|------------------------------------------------|
-| Math.E               | The constant `e`                               |
-| Math.log(x)          | Calculates the natural logarithm of x: $ln(x)$ |
-| Math.pow(x,y)        | Calculate $x$ to the exponent $y$: $x^y$       |
+- **Accuracy**:
+  \[
+  \text{accuracy} = \frac{\text{numCorrectGuesses}}{\text{numTotalGuesses}}
+  \]
 
-This step will result in a `List` of `TestFile` objects. The `TestFile` class is given.
+- **Precision**:
+  \[
+  \text{precision} = \frac{\text{numTruePositives}}{\text{numTruePositives} + \text{numFalsePositives}}
+  \]
 
-##### Evaluation
-When your application starts, it will ask the user to choose a directory. Below is an example of this code for Java Swing. The user will select the folder containing the train and test folders. Your application will then run the training and testing phases described above.
+These are displayed in the UI along with a detailed table showing each file's predicted class, actual class, and calculated spam probability.
 
-```java
-JFileChooser directoryChooser = new JFileChooser();
-directoryChooser.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
-directoryChooser.setCurrentDirectory(new File("."));
+## How to Run
 
-int returnValue = directoryChooser.showOpenDialog(window);
-...
-File mainDirectory = directoryChooser.getSelectedFile();
-```
+1. Clone this repository.
+2. Ensure you have Java (JDK 17 or higher) installed.
+3. Compile the code (starting with `SpamDetectorGUI.java`).
+4. Run the application and use the GUI to:
+  - Train on the directory: `./src/main/resources/data/train` (includes `ham`, `ham2`, and `spam` folders).
+  - Test on the directory: `./src/main/resources/data/test`.
 
-Once training and testing has completed, display your results in a `JTable`, including columns for the filename (which is unique), your spam detector’s categorization, and the actual category (which is already known, based on the folder name). At the bottom of your application window, display some summary stats, including the percentage of correct guesses (accuracy) and the ratio of correct positives (spam) to spam guesses (correct or not) (precision). An example of the output is given in the figure.
+*Ensure you only select the folder – don't open it inside the file chooser.*
 
-```math
-\text{accuracy} = \frac{ \text{numCorrectGuesses} }{ \text{numGuesses} } = \frac{ \text{numTruePositives} + \text{numTrueNegaives} }{ \text{numFiles} }
-```
-<br>
-
-```math
-\text{precision} = \frac{ \text{numTruePositives} }{ \text{numFalsePositives} + \text{numTruePositives} }
-```
+## Screenshot
 
 <div align="center">
-  <img src="Assignment01Output.png" alt="Assignment 1 Output">
+  <img src="hamOutput.png" alt="Ham Output Example">
+  <img src="spamOutput.png" alt="Spam Output Example">
 </div>
 
-### Secondary Instructions
-- **The interface.** While the figure shows the most basic version of your UI for the spam detector, you are expected to improve the screen's aesthetics.
-- **The model.** Can you think of any way to improve the spam detector? Research and see how much you can improve your score in your final product. Start with a copy of your bag of words, Bayesian spam detector, above, and modify it to implement your ideas and verify that they work.
-- **The data.** The training and testing data are given to you on the boilerplate template for the assignment `spamDetectorServer/src/main/resources/`. You will note that in the training data, the ham files are split into 2 folders, that’s to reduce the training time; however, you are encouraged to use the data in both folders for your training after you have completed the algorithm in the SpamDetector class.
-- **README.md** Make sure your project includes a readme.md file containing the following sections:
-  - Project information: a short textual description of your project and at least one screenshot of your application running.
-  - Improvements: briefly describe your improvements to the interface and/or the model (if any).
-  - How to run: Here is the step-by-step information on successfully cloning and running your application.
-  - Screenshot/recording: a screenshot/recording demonstrating the application running
-  - Other resources: any references to other materials/libraries that you might have used on your solution or model improvement.
+## Improvements
 
->- Feel free to create other helper classes as you see fit.
->
->- You are not expected to get the exact same values as the ones shown in the samples.
+- Laplace smoothing was used to improve generalization and avoid overfitting.
+- Logarithmic and exponential functions prevent underflow for large documents.
+- GUI and logic were modularized for better readability and maintenance.
 
-### References
-[1] https://en.wikipedia.org/wiki/Bag-of-words_model
+## References
 
-[2] https://en.wikipedia.org/wiki/Naive_Bayes_spam_filtering
+- [Bag-of-words model](https://en.wikipedia.org/wiki/Bag-of-words_model)
+- [Naive Bayes spam filtering](https://en.wikipedia.org/wiki/Naive_Bayes_spam_filtering)
